@@ -1,0 +1,113 @@
+region,zone,gpu,available,attempted,allocated,reason
+us-central1,us-central1-c,nvidia-l4,Yes,Yes,Yes,Created
+us-central1,us-central1-a,nvidia-l4,Yes,Yes,Yes,Created
+us-central1,us-central1-f,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-central1,us-central1-b,nvidia-l4,Yes,Yes,Yes,Created
+us-east1,us-east1-b,nvidia-l4,Yes,Yes,Yes,Created
+us-east1,us-east1-c,nvidia-l4,Yes,Yes,Yes,Created
+us-east1,us-east1-d,nvidia-l4,Yes,Yes,Yes,Created
+us-east4,us-east4-c,nvidia-l4,Yes,Yes,No,"WARNING: Some requests generated warnings:
+ - Disk size: '40 GB' is larger than image size: '10 GB'. You might need to resize the root repartition manually if the operating system does not support automatic resizing. See https://cloud.google.com/compute/docs/disks/add-persistent-disk#resize_pd for details.
+
+ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+---
+code: ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS
+errorDetails:
+- help:
+    links:
+    - description: Troubleshooting documentation
+      url: https://cloud.google.com/compute/docs/resource-error
+- localizedMessage:
+    locale: en-US
+    message: A g2-standard-4 VM instance with 1 nvidia-l4 accelerator(s) is currently
+      unavailable in the us-east4-c zone. Consider trying your request in the us-east4-a
+      zone(s), which currently has capacity to accommodate your request. Alternatively,
+      you can try your request again with a different VM hardware configuration or
+      at a later time. For more information, see the troubleshooting documentation.
+- errorInfo:
+    domain: compute.googleapis.com
+    metadatas:
+      attachment: nvidia-l4:1
+      vmType: g2-standard-4
+      zone: us-east4-c
+      zonesAvailable: us-east4-a
+    reason: resource_availability
+message: The zone 'projects/cloudml-509216/zones/us-east4-c' does not have enough
+  resources available to fulfill the request.  'NULL:0/NULL:0/NULL:0 (state:STOCKOUT,
+  sub-state:STOCKOUT, resource type:compute)'."
+us-east4,us-east4-b,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-east4,us-east4-a,nvidia-l4,Yes,Yes,Yes,Created
+us-east5,us-east5-a,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-east5,us-east5-b,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-east5,us-east5-c,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-south1,us-south1-a,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-south1,us-south1-b,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-south1,us-south1-c,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west1,us-west1-b,nvidia-l4,Yes,Yes,No,"WARNING: Some requests generated warnings:
+ - Disk size: '40 GB' is larger than image size: '10 GB'. You might need to resize the root repartition manually if the operating system does not support automatic resizing. See https://cloud.google.com/compute/docs/disks/add-persistent-disk#resize_pd for details.
+
+ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+---
+code: ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS
+errorDetails:
+- help:
+    links:
+    - description: Troubleshooting documentation
+      url: https://cloud.google.com/compute/docs/resource-error
+- localizedMessage:
+    locale: en-US
+    message: A g2-standard-4 VM instance with 1 nvidia-l4 accelerator(s) is currently
+      unavailable in the us-west1-b zone. Consider trying your request in the us-west1-a
+      zone(s), which currently has capacity to accommodate your request. Alternatively,
+      you can try your request again with a different VM hardware configuration or
+      at a later time. For more information, see the troubleshooting documentation.
+- errorInfo:
+    domain: compute.googleapis.com
+    metadatas:
+      attachment: nvidia-l4:1
+      vmType: g2-standard-4
+      zone: us-west1-b
+      zonesAvailable: us-west1-a
+    reason: resource_availability
+message: The zone 'projects/cloudml-509216/zones/us-west1-b' does not have enough
+  resources available to fulfill the request.  'NULL:0/NULL:0/NULL:0 (state:STOCKOUT,
+  sub-state:STOCKOUT, resource type:compute)'."
+us-west1,us-west1-c,nvidia-l4,Yes,Yes,Yes,Created
+us-west1,us-west1-a,nvidia-l4,Yes,Yes,Yes,Created
+us-west2,us-west2-a,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west2,us-west2-b,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west2,us-west2-c,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west3,us-west3-a,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west3,us-west3-b,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west3,us-west3-c,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west4,us-west4-a,nvidia-l4,Yes,Yes,No,"WARNING: Some requests generated warnings:
+ - Disk size: '40 GB' is larger than image size: '10 GB'. You might need to resize the root repartition manually if the operating system does not support automatic resizing. See https://cloud.google.com/compute/docs/disks/add-persistent-disk#resize_pd for details.
+
+ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+---
+code: ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS
+errorDetails:
+- help:
+    links:
+    - description: Troubleshooting documentation
+      url: https://cloud.google.com/compute/docs/resource-error
+- localizedMessage:
+    locale: en-US
+    message: A g2-standard-4 VM instance with 1 nvidia-l4 accelerator(s) is currently
+      unavailable in the us-west4-a zone. Consider trying your request in the us-west4-c
+      zone(s), which currently has capacity to accommodate your request. Alternatively,
+      you can try your request again with a different VM hardware configuration or
+      at a later time. For more information, see the troubleshooting documentation.
+- errorInfo:
+    domain: compute.googleapis.com
+    metadatas:
+      attachment: nvidia-l4:1
+      vmType: g2-standard-4
+      zone: us-west4-a
+      zonesAvailable: us-west4-c
+    reason: resource_availability
+message: The zone 'projects/cloudml-509216/zones/us-west4-a' does not have enough
+  resources available to fulfill the request.  'NULL:0/NULL:0/NULL:0 (state:STOCKOUT,
+  sub-state:STOCKOUT, resource type:compute)'."
+us-west4,us-west4-b,nvidia-l4,No,No,No,nvidia-l4 not offered; skipped
+us-west4,us-west4-c,nvidia-l4,Yes,Yes,Yes,Created

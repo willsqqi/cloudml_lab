@@ -1,7 +1,7 @@
 """GPU Chase ... Find a GPU in Google Cloud
 
 PSEUDOCODE
-    SET project, selected GPU (T4), VM name, and region filter below
+    SET project, selected GPU (L4), VM name, and region filter below
     CREATE timestamped CSV and log file paths
     GET regions, zones, and GPU types from Google Cloud
 
@@ -37,7 +37,7 @@ import json
 import subprocess
 
 PROJECT = "cloudml-509216"
-GPU = "nvidia-tesla-t4"
+GPU = "nvidia-l4"
 NAME = "gpu-chase-test"
 REGION_PREFIX = "us-"  # "us-" = US regions
 
@@ -84,13 +84,13 @@ def main():
                 continue
             offered = any(g["name"] == GPU and g["zone"].split("/")[-1] == zone["name"]
                           for g in gpu_types)
-            reason = "Not attempted" if offered else "T4 not offered; skipped"
+            reason = "Not attempted" if offered else f"{GPU} not offered; skipped"
             rows.append(dict(region=region["name"], zone=zone["name"], gpu=GPU,
                              available="Yes" if offered else "No", attempted="No",
                              allocated="Not tested" if offered else "No", reason=reason))
             if zone["status"] != "UP":
                 rows[-1]["reason"] = "Zone not UP; skipped"
-            print(region["name"], zone["name"], "T4 listed:", rows[-1]["available"])
+            print(region["name"], zone["name"], f"{GPU} listed:", rows[-1]["available"])
 
     def save():
         with output.open("w", newline="") as file:
@@ -109,10 +109,10 @@ def main():
         print(f"\nTesting {zone} with one {GPU} ...", flush=True)
         result = run_command([
             "gcloud", "compute", "instances", "create", NAME, f"--project={PROJECT}",
-            f"--zone={zone}", "--machine-type=n1-standard-1",
-            f"--accelerator=type={GPU},count=1", "--maintenance-policy=TERMINATE",
+            f"--zone={zone}", "--machine-type=g2-standard-4",
+            "--maintenance-policy=TERMINATE",
             "--image-family=debian-12", "--image-project=debian-cloud",
-            "--boot-disk-size=10GB", "--boot-disk-type=pd-standard",
+            "--boot-disk-size=40GB", "--boot-disk-type=pd-balanced",
             "--boot-disk-auto-delete", "--network=default", "--no-address", "--quiet"])
         print(result.stdout, result.stderr)
         success = result.returncode == 0
