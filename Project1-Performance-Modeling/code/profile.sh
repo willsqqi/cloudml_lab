@@ -34,6 +34,7 @@ if [[ ! -x "$python_executable" ]]; then
     /share/apps/pyenv/py3.9/bin/python -m venv "$project_home/project1-py39-cu118"
 fi
 if ! "$python_executable" -c 'import torch, torchvision; assert torch.__version__ == "2.6.0+cu118" and torchvision.__version__ == "0.21.0+cu118"'; then
+    "$python_executable" -m pip install --upgrade pip --index-url https://pypi.org/simple
     "$python_executable" -m pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu118
 fi
 
