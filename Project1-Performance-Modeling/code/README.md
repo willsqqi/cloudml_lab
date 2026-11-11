@@ -1,13 +1,14 @@
 # Project 1 experiment code
 
-Two scripts:
+Three scripts:
 
 - `main.py`: measure training time, throughput and peak allocated GPU memory; mark forward and backward for profiling.
 - `roofline.py`: read Nsight Compute CSV files and draw separate forward/backward panels for one GPU.
+- `run.slurm`: queue a GPU job and run all three models automatically.
 
-`main()` is the entry point in each script. In `main.py`, two small helpers prepare the images and run one training step.
+`main()` is the entry point in each Python script. In `main.py`, two small helpers prepare the images and run one training step.
 
-Run from this folder on a GPU compute node. Use the same CUDA-enabled PyTorch, Torchvision and Matplotlib environment on L4 and A100. Profiling uses NVIDIA Nsight Compute (`ncu`, version 2024.4 or newer) and requires access to GPU performance counters.
+Submit the batch script from a shell connected to the Burst cluster. Slurm runs it on the allocated GPU compute node. Use the same CUDA-enabled PyTorch, Torchvision and Matplotlib environment on L4 and A100. Profiling uses NVIDIA Nsight Compute (`ncu`, version 2024.4 or newer) and requires access to GPU performance counters.
 
 ## Settings
 
@@ -17,7 +18,37 @@ Each repetition restores the initial weights and resets the optimizer before war
 
 Use the prepared 128-image [Imagenette subset](../data/README.md) on both GPUs, with one subfolder per class. The script loads these images in a fixed order using seed 0 and saves their paths and labels in its JSON output. Compare these lists across runs to confirm the same input subset. The experiment script does not download data or pretrained weights.
 
-## Measure training
+## Submit a batch job
+
+Place `code/`, the prepared `data/imagenet128/` folder, and a CUDA-enabled Python environment on storage visible to the Burst compute nodes. Torch and Burst have [separate compute storage](https://services.rt.nyu.edu/docs/cloud/hpc_bursting_to_cloud/intro/). Slurm transfers the batch script itself; it does not upload the Python files, images or environment.
+
+From the `code` folder on Burst, activate your Python environment and submit one job for each GPU type:
+
+```bash
+sbatch run.slurm                                  # L4
+sbatch --partition=c12m85-a100-1 run.slurm          # A100 40 GB
+```
+
+The script requests one GPU, four CPU cores, 16 GB of host memory and a one-hour time limit using the course account. Each job runs ResNet-50, ResNet-101 and ResNet-152 in sequence, then exits. It stops if a command fails. These are the unprofiled timing runs; the profiling procedure is below.
+
+To select Python and the image folder explicitly, pass them as arguments:
+
+```bash
+sbatch run.slurm /absolute/path/to/environment/bin/python /absolute/path/to/imagenet128
+```
+
+Use a Python environment containing CUDA-enabled PyTorch, Torchvision and pip. The cluster environment still needs verification; the script does not install packages. Use the same environment for both GPUs.
+
+After submission, you can disconnect. Slurm starts the script when its resources are ready. Results go into `results/<partition>-<job-id>/`, including the GPU details, package versions and three model JSON files. Console output and errors go into `slurm-<job-id>.out` and `slurm-<job-id>.err` in the submission folder.
+
+```bash
+squeue --me                                      # queued and running jobs
+sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed
+```
+
+Replace `JOB_ID` with the number returned by `sbatch`. See the [Slurm batch submission documentation](https://slurm.schedmd.com/sbatch.html) for submission and output behavior.
+
+## Measure training manually
 
 Set the dataset path and output folder for the allocated GPU:
 
