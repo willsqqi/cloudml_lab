@@ -1,10 +1,11 @@
 # Project 1 experiment code
 
-Three scripts:
+Four scripts:
 
 - `main.py`: measure training time, throughput and peak allocated GPU memory; mark forward and backward for profiling.
 - `roofline.py`: read Nsight Compute CSV files and draw separate forward/backward panels for one GPU.
 - `run.slurm`: queue a GPU job and run all three models automatically.
+- `profile.sh`: prepare the environment and submit one L4 batch job from the OOD startup hook.
 
 `main()` is the entry point in each Python script. In `main.py`, two small helpers prepare the images and run one training step.
 
@@ -47,6 +48,20 @@ sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed
 ```
 
 Replace `JOB_ID` with the number returned by `sbatch`. See the [Slurm batch submission documentation](https://slurm.schedmd.com/sbatch.html) for submission and output behavior.
+
+## Automatic startup for OOD session 28481
+
+`profile.sh` is the startup script installed at `/home/sq2326/profile.sh` for the current CPU-only OOD session. It checks and extracts the uploaded `project1-batch-bundle.tar.gz`, prepares a private environment with PyTorch 2.6.0 and Torchvision 0.21.0 for CUDA 11.8, checks image loading, then submits `run.slurm` to the L4 partition. A lock and job record prevent repeated submission.
+
+The session's own `before.sh` calls it in the background:
+
+```bash
+bash /home/sq2326/profile.sh > /home/sq2326/project1-autosubmit-28481.log 2>&1 &
+```
+
+The setup log is `project1-autosubmit-28481.log`; the submitted GPU job ID is saved in `project1-batch-job-28481.txt`, both in `/home/sq2326`. Setup must finish successfully before the GPU job is submitted. This runs the timing benchmark; Nsight profiling remains a separate step below.
+
+This copy is tied to session 28481 and the uploaded bundle's recorded checksum. Uploading or committing it does not attach it to future OOD sessions. Shell syntax and mock submission checks passed; execution on HPC remains unverified.
 
 ## Measure training manually
 
