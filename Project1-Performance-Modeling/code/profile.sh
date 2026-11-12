@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${PEAK_GFLOPS:?Set PEAK_GFLOPS for the selected GPU before startup}"
+: "${BANDWIDTH_GBS:?Set BANDWIDTH_GBS for the selected GPU before startup}"
+export PEAK_GFLOPS BANDWIDTH_GBS
+
 project_home="${1:-/home/sq2326}"
 project_folder="$project_home/Project1-Performance-Modeling"
-job_record="$project_home/project1-batch-job-28481.txt"
-job_name="resnet-28481"
+job_record="$project_home/project1-batch-job-pipeline.txt"
+job_name="resnet-pipeline"
 trap 'echo "Setup failed at line $LINENO. No successful run is implied; check this log and the job record." >&2' ERR
 
 echo "Starting Project 1 setup at $(date -Is) on $(hostname)"
 # prevent duplicate submission if the setup session restarts
-exec 9> "$project_home/project1-autosubmit-28481.lock"
+exec 9> "$project_home/project1-autosubmit-pipeline.lock"
 flock -n 9 || exit 0
 if [[ -s "$job_record" ]]; then
     echo "Batch job already recorded: $(cat "$job_record")"
@@ -23,8 +27,8 @@ if [[ -n "$existing_job" ]]; then
 fi
 
 # verify the uploaded bundle before extracting code and images
-archive="$project_home/project1-batch-bundle.tar.gz"
-printf '%s  %s\n' '17d70d0675544914b13ac0908bf2908b2e6e65bbf6bddf11924f05ceb8ee83c1' "$archive" | sha256sum -c -
+archive="$project_home/project1-pipeline-bundle.tar.gz"
+printf '%s  %s\n' '5bfd70a7ecab323a4d1ee55f9b1bdf756b666464024dc1786d7d31b85b0f451f' "$archive" | sha256sum -c -
 tar -xzf "$archive" -C "$project_home"
 cd "$project_folder/code"
 
@@ -37,6 +41,10 @@ if ! "$python_executable" -c 'import torch, torchvision; assert torch.__version_
     "$python_executable" -m pip install --upgrade pip --index-url https://pypi.org/simple
     "$python_executable" -m pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu118
 fi
+
+"$python_executable" -c "import matplotlib" 2>/dev/null || "$python_executable" -m pip install matplotlib==3.9.4 --index-url https://pypi.org/simple
+
+"$python_executable" -c 'import math, sys; assert all(math.isfinite(float(x)) and float(x) > 0 for x in sys.argv[1:])' "$PEAK_GFLOPS" "$BANDWIDTH_GBS"
 
 # check the imports and actual image loading before requesting a GPU
 "$python_executable" - <<'PY'
@@ -51,7 +59,7 @@ assert all(tuple(x.shape) == (32, 3, 224, 224) for x, y in batches)
 print('Preflight passed:', torch.__version__, torchvision.__version__, len(images), 'images')
 PY
 bash -n run.slurm
-job_id=$(sbatch --parsable --job-name="$job_name" --account=csci_ga_3033_085-2026fa --partition=g2-standard-12 run.slurm "$python_executable" "$project_folder/data/imagenet128")
+job_id=$(sbatch --parsable --job-name="$job_name" --account=csci_ga_3033_085-2026fa --partition="${PARTITION:-g2-standard-12}" run.slurm "$python_executable" "$project_folder/data/imagenet128")
 printf '%s\n' "$job_id" > "$job_record"
 echo "Submitted GPU batch job $job_id"
 echo "Job record: $job_record"

@@ -3,8 +3,8 @@
 Four scripts:
 
 - `main.py`: measure training time, throughput and peak allocated GPU memory; mark forward and backward for profiling.
-- `roofline.py`: read Nsight Compute CSV files and draw separate forward/backward panels for one GPU.
-- `run.slurm`: queue a GPU job and run all three models automatically.
+- `roofline.py`: read Nsight Compute CSV files and draw forward/backward panels with one point per model for one GPU.
+- `run.slurm`: queue timing, six Nsight profiles, and roofline plotting automatically.
 - `profile.sh`: prepare the environment and submit one L4 batch job from the OOD startup hook.
 
 `main()` is the entry point in each Python script. In `main.py`, two small helpers prepare the images and run one training step.
@@ -23,14 +23,14 @@ Use the prepared 128-image [Imagenette subset](../data/README.md) on both GPUs, 
 
 Place `code/`, the prepared `data/imagenet128/` folder, and a CUDA-enabled Python environment on storage visible to the Burst compute nodes. Torch and Burst have [separate compute storage](https://services.rt.nyu.edu/docs/cloud/hpc_bursting_to_cloud/intro/). Slurm transfers the batch script itself; it does not upload the Python files, images or environment.
 
-From the `code` folder on Burst, activate your Python environment and submit one job for each GPU type:
+From the `code` folder in an OOD Jupyter terminal, activate your Python environment. Before submission, export `PEAK_GFLOPS` and `BANDWIDTH_GBS` as positive numbers for the exact GPU board (ordinary FP32, not Tensor Core throughput). These settings are inherited by the batch job. If `ncu` is not on PATH, export `NCU` as its absolute path. Then submit for the matching GPU type:
 
 ```bash
 sbatch run.slurm                                  # L4
 sbatch --partition=c12m85-a100-1 run.slurm          # A100 40 GB
 ```
 
-The script requests one GPU, four CPU cores, 16 GB of host memory and a one-hour time limit using the course account. Each job runs ResNet-50, ResNet-101 and ResNet-152 in sequence, then exits. It stops if a command fails. These are the unprofiled timing runs; the profiling procedure is below.
+The script requests one GPU, four CPU cores, 16 GB of host memory and a one-hour time limit using the course account. Each job runs ResNet-50, ResNet-101 and ResNet-152 in sequence, then exits. It stops if a command fails. Timing runs are followed by six separate Nsight Compute runs and automatic plotting. Kernel replay can take substantially longer than timing alone; the one-hour limit must be checked on HPC and increased at submission if needed.
 
 To select Python and the image folder explicitly, pass them as arguments:
 
@@ -38,9 +38,9 @@ To select Python and the image folder explicitly, pass them as arguments:
 sbatch run.slurm /absolute/path/to/environment/bin/python /absolute/path/to/imagenet128
 ```
 
-Use a Python environment containing CUDA-enabled PyTorch, Torchvision and pip. The cluster environment still needs verification; the script does not install packages. Use the same environment for both GPUs.
+Use a Python environment containing CUDA-enabled PyTorch, Torchvision, Matplotlib and pip. The cluster environment still needs verification; the script does not install packages. Use the same environment for both GPUs.
 
-After submission, you can disconnect. Slurm starts the script when its resources are ready. Results go into `results/<partition>-<job-id>/`, including the GPU details, package versions and three model JSON files. Console output and errors go into `slurm-<job-id>.out` and `slurm-<job-id>.err` in the submission folder.
+After submission, you can disconnect. Slurm starts the script when its resources are ready. Results go into `results/<partition>-<job-id>/`, including GPU details, package and NCU versions, three timing JSON files, six `{model}-{phase}.csv` files, six `.ncu-rep` reports, `roofline.png`, `roofline-points.csv`, and `roofline-summary.csv`. Profile metadata is saved separately under `profile-metadata/<phase>/`. A missing profiler, unavailable counters, or invalid CSV stops the job instead of reporting success. Console output and errors go into `slurm-<job-id>.out` and `slurm-<job-id>.err` in the submission folder.
 
 ```bash
 squeue --me                                      # queued and running jobs
@@ -49,19 +49,23 @@ sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed
 
 Replace `JOB_ID` with the number returned by `sbatch`. See the [Slurm batch submission documentation](https://slurm.schedmd.com/sbatch.html) for submission and output behavior.
 
-## Automatic startup for OOD session 28481
+## Automatic startup from OOD
 
-`profile.sh` is the startup script installed at `/home/sq2326/profile.sh` for the current CPU-only OOD session. It checks and extracts the uploaded `project1-batch-bundle.tar.gz`, prepares a private environment with PyTorch 2.6.0 and Torchvision 0.21.0 for CUDA 11.8, checks image loading, then submits `run.slurm` to the L4 partition. A lock and job record prevent repeated submission.
+Upload `profile.sh` to `/home/sq2326/profile.sh` and the matching `project1-pipeline-bundle.tar.gz` to `/home/sq2326/`. The bundle contains `main.py`, `roofline.py`, `run.slurm`, and the images; it deliberately excludes the host bootstrapper. Its SHA-256 must match the checksum in `profile.sh`. Rebuild the bundle and update the checksum whenever its code or data changes; old uploaded bundles still contain the old timing-only pipeline.
 
-The session's own `before.sh` calls it in the background:
+In the session's startup hook, export `PEAK_GFLOPS` and `BANDWIDTH_GBS` with the verified board specifications, then invoke:
 
 ```bash
-bash /home/sq2326/profile.sh > /home/sq2326/project1-autosubmit-28481.log 2>&1 &
+bash /home/sq2326/profile.sh > /home/sq2326/project1-autosubmit-pipeline.log 2>&1 &
 ```
 
-The setup log is `project1-autosubmit-28481.log`; the submitted GPU job ID is saved in `project1-batch-job-28481.txt`, both in `/home/sq2326`. Setup must finish successfully before the GPU job is submitted. This runs the timing benchmark; Nsight profiling remains a separate step below.
+`PARTITION` defaults to `g2-standard-12`; set it to `c12m85-a100-1` for A100 and use matching peak/bandwidth values. The hook must also export `NCU` if a full profiler path is needed. The bootstrapper installs the Python dependencies, checks image loading, and submits the complete batch pipeline. It does not install Nsight Compute or grant counter permissions.
 
-This copy is tied to session 28481 and the uploaded bundle's recorded checksum. Uploading or committing it does not attach it to future OOD sessions. Shell syntax and mock submission checks passed; execution on HPC remains unverified.
+The lock and `project1-batch-job-pipeline.txt` prevent duplicate submission. An existing job record deliberately stops further submissions, even after failure; inspect the recorded job before explicitly archiving the record for a retry or the other GPU. Do not attach multiple startup hooks for the same run.
+
+## Optional manual procedures
+
+The following commands are for troubleshooting individual stages; `run.slurm` now performs timing, profiling, and plotting automatically.
 
 ## Measure training manually
 
@@ -111,8 +115,12 @@ Supply the FP32 compute peak in **GFLOP/s** and DRAM bandwidth in **GB/s** for t
 python roofline.py results/l4 --peak-gflops <FP32_PEAK> --bandwidth-gbs <DRAM_BANDWIDTH>
 ```
 
-Replace the two placeholders with numbers, then repeat for `results/a100` using that board's values. The script expects all six model-phase CSV files in each folder and produces `roofline.png` and `roofline-points.csv`. Both phase panels share the same roof and axis scales. Each point represents one kernel invocation; no model-level aggregation is applied.
+Replace the two placeholders with numbers, then repeat for `results/a100` using that board's values. The script expects all six model-phase CSV files in each folder. It produces `roofline.png` with forward and backward panels, each containing one point for each of the three ResNet models. Model colors are consistent across phases and GPUs. Both panels within each figure share the same roof and axis scales; two GPU runs produce four panels in total.
 
-FLOPs are FP32 additions + multiplications + twice fused multiply-adds. Bytes are DRAM reads + writes. Arithmetic intensity is FLOPs/bytes; performance is FLOPs/seconds. These instruction counts exclude special-function and integer operations. Zero-work or zero-traffic kernels are retained in the output CSV and omitted from the logarithmic plot, with a count printed.
+`roofline-summary.csv` contains six model/phase rows, including kernel counts, total FLOPs, total DRAM bytes, summed kernel durations, and the calculated coordinates. `roofline-points.csv` retains the per-kernel measurements. The six input CSVs and original `.ncu-rep` files are unchanged and can be used for detailed bottleneck analysis.
+
+FLOPs are FP32 additions + multiplications + twice fused multiply-adds. Bytes are DRAM reads + writes. For each model and phase, sum these quantities over all captured kernels before calculating arithmetic intensity (total FLOPs / total bytes) and performance (total FLOPs / summed kernel seconds). Do not average the individual kernel coordinates. Include zero-FLOP and zero-traffic kernels in the totals; summaries with zero total FLOPs or bytes remain in the CSV but are omitted from the logarithmic plot, with a count printed. These instruction counts exclude special-function and integer operations.
+
+The figure reports aggregate profiled kernel performance. Each point uses FLOPs, bytes, and durations from the same model/phase capture. Summed kernel durations are not elapsed phase time: they exclude gaps and do not account for overlap between kernels. Check a timeline and account for overlap before interpreting elapsed phase performance. Profiling replay also affects execution, so use the separate unprofiled training-step JSON measurements for training throughput.
 
 API references: [PyTorch CUDA timing and FP32 settings](https://docs.pytorch.org/docs/stable/notes/cuda), [Nsight Compute CLI and NVTX filtering](https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html), and [NVIDIA FLOP metric mapping](https://docs.nvidia.com/cupti/13.5.0/main/main.html).

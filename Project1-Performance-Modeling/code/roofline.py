@@ -1,4 +1,4 @@
-"""Plot separate forward/backward panels from Nsight Compute CSV exports."""
+"""Plot model-level forward/backward summaries from Nsight Compute CSV exports."""
 
 import argparse
 import csv
@@ -17,9 +17,15 @@ PHASES = ["forward", "backward"]
 
 
 def value_in_base_units(value, unit):
-    unit_scales = {"": 1, "inst": 1, "byte": 1, "second": 1,
-                   "msecond": 1e-3, "usecond": 1e-6, "nsecond": 1e-9}
-    converted_value = float(value.replace(",", "")) * unit_scales[unit.strip()]
+    unit = unit.strip()
+    unit_scales = {"": 1}
+    for base in ("byte", "inst", "cycle", "second"):
+        for prefix, scale in (("", 1), ("K", 1e3), ("M", 1e6), ("G", 1e9),
+                              ("T", 1e12), ("m", 1e-3), ("u", 1e-6), ("n", 1e-9)):
+            unit_scales[prefix + base] = scale
+    if unit not in unit_scales:
+        raise ValueError(f"Unsupported Nsight unit: {unit!r}; export with --print-units base")
+    converted_value = float(value.replace(",", "")) * unit_scales[unit]
     if not math.isfinite(converted_value) or converted_value < 0:
         raise ValueError(f"Invalid metric value: {value} {unit}")
     return converted_value
@@ -81,8 +87,24 @@ def main():
                     "flops_per_byte": flops / dram_bytes if dram_bytes else 0,
                     "gflops_per_second": flops / kernel_metrics[KERNEL_TIME] / 1e9,
                 })
-    # Zero-work/zero-traffic kernels remain in the CSV but cannot appear on log axes.
-    plotted_points = [point for point in roofline_points
+    model_summaries = []
+    for model in MODELS:
+        for phase in PHASES:
+            kernels = [point for point in roofline_points
+                       if point["model"] == model and point["phase"] == phase]
+            # Sum all kernels before dividing, including zero-FLOP or zero-traffic kernels.
+            total_flops = sum(point["flops"] for point in kernels)
+            total_bytes = sum(point["dram_bytes"] for point in kernels)
+            kernel_seconds = sum(point["seconds"] for point in kernels)
+            model_summaries.append({
+                "model": model, "phase": phase, "kernel_count": len(kernels),
+                "flops": total_flops, "dram_bytes": total_bytes,
+                "summed_kernel_seconds": kernel_seconds,
+                "flops_per_byte": total_flops / total_bytes if total_bytes else 0,
+                "gflops_per_second": total_flops / kernel_seconds / 1e9,
+            })
+    # Summed profiled kernel durations are not end-to-end phase or training-step time.
+    plotted_points = [point for point in model_summaries
                       if point["flops_per_byte"] > 0 and point["gflops_per_second"] > 0]
     if not plotted_points:
         raise ValueError("No positive FLOP/byte measurements to plot.")
@@ -108,22 +130,24 @@ def main():
                             if point["model"] == model and point["phase"] == phase]
             panel.scatter([point["flops_per_byte"] for point in model_points],
                           [point["gflops_per_second"] for point in model_points],
-                          s=16, alpha=0.65, color=color, label=model)
+                          s=65, color=color, label=model)
         panel.set_title(phase.capitalize())
         panel.set_xlabel("Arithmetic intensity (FLOP/byte)")
         panel.grid(True, which="both", alpha=0.2)
-    panels[0].set_ylabel("Achieved performance (GFLOP/s)")
+    panels[0].set_ylabel("Aggregate profiled kernel performance (GFLOP/s)")
     panels[1].legend(fontsize=8)
-    figure.suptitle(f"{args.folder.name}: one point per kernel invocation")
+    figure.suptitle(f"{args.folder.name}: one point per model in each phase")
     figure.tight_layout()
     figure.savefig(args.folder / "roofline.png", dpi=200)
     plt.close(figure)
-    with (args.folder / "roofline-points.csv").open("w", newline="") as output:
-        writer = csv.DictWriter(output, fieldnames=list(roofline_points[0]))
-        writer.writeheader()
-        writer.writerows(roofline_points)
-    print(f"Saved roofline.png and roofline-points.csv in {args.folder}")
-    print(f"Plotted {len(plotted_points)} of {len(roofline_points)} kernels; omitted zero-work/zero-traffic points.")
+    for filename, rows in [("roofline-points.csv", roofline_points),
+                           ("roofline-summary.csv", model_summaries)]:
+        with (args.folder / filename).open("w", newline="") as output:
+            writer = csv.DictWriter(output, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+    print(f"Saved roofline.png, roofline-points.csv, and roofline-summary.csv in {args.folder}")
+    print(f"Plotted {len(plotted_points)} of {len(model_summaries)} model/phase summaries; omitted zero-work/zero-traffic summaries.")
 
 
 if __name__ == "__main__":
