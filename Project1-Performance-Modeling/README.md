@@ -1,6 +1,7 @@
 # Project 1: Performance Modeling and Analysis
 
-- `Project One Report.docx`: project report.
+- `Project_1_Report.docx`: editable project report.
+- `Project_1_Report.pdf`: submitted project report.
 - `resultscalculations.xlsx`: report tables, measured inputs, model calculations, and formulas linking the results to their sources.
 - `code/`: scripts for running the experiment, collecting measurements, and drawing the Roofline plots.
   `kernel_groups.py` groups the profiled kernels and produces Tables 5 and 6 and `kernel-roofline.png`.
