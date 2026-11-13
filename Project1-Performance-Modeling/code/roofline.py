@@ -19,7 +19,7 @@ PHASES = ["forward", "backward"]
 def value_in_base_units(value, unit):
     unit = unit.strip()
     unit_scales = {"": 1}
-    for base in ("byte", "inst", "cycle", "second"):
+    for base in ("byte", "inst", "cycle", "second", "s"):
         for prefix, scale in (("", 1), ("K", 1e3), ("M", 1e6), ("G", 1e9),
                               ("T", 1e12), ("m", 1e-3), ("u", 1e-6), ("n", 1e-9)):
             unit_scales[prefix + base] = scale
@@ -67,7 +67,7 @@ def read_kernels(path):
 def main():
     """Read profiling files, calculate the points, and save the plots."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("folder", type=Path, help="One GPU's six model-phase CSV files")
+    parser.add_argument("folder", type=Path, help="GPU folder containing ResNet-50, ResNet-101, and ResNet-152 subfolders")
     parser.add_argument("--peak-gflops", type=float, required=True, help="This GPU's FP32 peak, GFLOP/s")
     parser.add_argument("--bandwidth-gbs", type=float, required=True, help="This GPU's DRAM bandwidth, GB/s")
     args = parser.parse_args()
@@ -76,8 +76,9 @@ def main():
 
     roofline_points = []
     for model in MODELS:
+        model_folder = args.folder / f"ResNet-{model[6:]}"
         for phase in PHASES:
-            for kernel_metrics in read_kernels(args.folder / f"{model}-{phase}.csv"):
+            for kernel_metrics in read_kernels(model_folder / f"{model}-{phase}.csv"):
                 # Each fused multiply-add (FMA) performs two floating-point operations.
                 flops = kernel_metrics[FP32_ADD] + kernel_metrics[FP32_MUL] + 2 * kernel_metrics[FP32_FMA]
                 dram_bytes = kernel_metrics[DRAM_READ] + kernel_metrics[DRAM_WRITE]
@@ -140,13 +141,18 @@ def main():
     figure.tight_layout()
     figure.savefig(args.folder / "roofline.png", dpi=200)
     plt.close(figure)
-    for filename, rows in [("roofline-points.csv", roofline_points),
-                           ("roofline-summary.csv", model_summaries)]:
-        with (args.folder / filename).open("w", newline="") as output:
+    # Keep kernel details with each model and the comparison summary at GPU level.
+    csv_outputs = [(args.folder / "roofline-summary.csv", model_summaries)]
+    for model in MODELS:
+        model_folder = args.folder / f"ResNet-{model[6:]}"
+        csv_outputs.append((model_folder / "roofline-points.csv",
+                            [point for point in roofline_points if point["model"] == model]))
+    for path, rows in csv_outputs:
+        with path.open("w", newline="") as output:
             writer = csv.DictWriter(output, fieldnames=list(rows[0]))
             writer.writeheader()
             writer.writerows(rows)
-    print(f"Saved roofline.png, roofline-points.csv, and roofline-summary.csv in {args.folder}")
+    print(f"Saved roofline.png and roofline-summary.csv in {args.folder}; kernel points are in each model folder")
     print(f"Plotted {len(plotted_points)} of {len(model_summaries)} model/phase summaries; omitted zero-work/zero-traffic summaries.")
 
 

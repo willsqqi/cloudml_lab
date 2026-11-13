@@ -1,0 +1,4 @@
+.support/
+__pycache__/
+*.ncu-rep
+*.tar.gz

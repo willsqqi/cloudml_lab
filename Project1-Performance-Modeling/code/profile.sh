@@ -1,66 +1,55 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${PEAK_GFLOPS:?Set PEAK_GFLOPS for the selected GPU before startup}"
-: "${BANDWIDTH_GBS:?Set BANDWIDTH_GBS for the selected GPU before startup}"
-export PEAK_GFLOPS BANDWIDTH_GBS
+# GCP startup hook: bash /path/to/code/profile.sh /path/to/images /path/to/L4
+# Stage the code and images on the VM first. Use Linux with Python 3.9-3.12,
+# python3-venv, an NVIDIA driver, and Nsight Compute 2024.4+ installed.
+# Export PEAK_GFLOPS, BANDWIDTH_GBS, and NCU (if ncu is not on PATH) in the hook.
+cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+data_folder="${1:?Usage: bash profile.sh DATA_FOLDER OUTPUT_FOLDER}"
+output_folder="${2:?Choose a new GPU output folder; existing results are never overwritten}"
 
-project_home="${1:-/home/sq2326}"
-project_folder="$project_home/Project1-Performance-Modeling"
-job_record="$project_home/project1-batch-job-pipeline.txt"
-job_name="resnet-pipeline"
-trap 'echo "Setup failed at line $LINENO. No successful run is implied; check this log and the job record." >&2' ERR
-
-echo "Starting Project 1 setup at $(date -Is) on $(hostname)"
-# prevent duplicate submission if the setup session restarts
-exec 9> "$project_home/project1-autosubmit-pipeline.lock"
+# A reboot must not silently repeat a paid experiment, even after a failure.
+# To retry intentionally, archive .startup-run and the old logs first.
+exec 9> .startup.lock
 flock -n 9 || exit 0
-if [[ -s "$job_record" ]]; then
-    echo "Batch job already recorded: $(cat "$job_record")"
+if [[ -e .startup-run ]]; then
+    echo "Startup already attempted. Results location: $(cat .startup-run)"
     exit 0
 fi
-existing_job=$(squeue -h -u "$(id -un)" --name="$job_name" -o '%A')
-if [[ -n "$existing_job" ]]; then
-    printf '%s\n' "$existing_job" > "$job_record"
-    echo "Batch job already queued: $existing_job"
-    exit 0
-fi
+printf '%s\n' "$output_folder" > .startup-run
+echo "Setup log: $PWD/setup.log"
+exec >> setup.log 2>&1
+trap 'status=$?; echo "Setup/pipeline finished with exit code $status at $(date -Is)"; exit "$status"' EXIT
+echo "Starting setup on $(hostname) at $(date -Is)"
 
-# verify the uploaded bundle before extracting code and images
-archive="$project_home/project1-pipeline-bundle.tar.gz"
-printf '%s  %s\n' '5bfd70a7ecab323a4d1ee55f9b1bdf756b666464024dc1786d7d31b85b0f451f' "$archive" | sha256sum -c -
-tar -xzf "$archive" -C "$project_home"
-cd "$project_folder/code"
+: "${PEAK_GFLOPS:?Set PEAK_GFLOPS for the selected GPU}"
+: "${BANDWIDTH_GBS:?Set BANDWIDTH_GBS for the selected GPU}"
+export PEAK_GFLOPS BANDWIDTH_GBS
+command -v "${NCU:-ncu}" >/dev/null || {
+    echo "Nsight Compute is missing. Install ncu 2024.4+ or set NCU to its path." >&2
+    exit 1
+}
+command -v timeout >/dev/null
+nvidia-smi
+[[ -f main.py && -f roofline.py && -f run.sh && -d "$data_folder" ]] || {
+    echo "Missing code or images. Stage the code and the supplied image folder on the VM before startup." >&2
+    exit 1
+}
 
-# install a matching CUDA-enabled pair in a private environment
-python_executable="$project_home/project1-py39-cu118/bin/python"
+# Keep the same Python packages on both GPUs in a private environment.
+python_executable="$PWD/.venv/bin/python"
 if [[ ! -x "$python_executable" ]]; then
-    /share/apps/pyenv/py3.9/bin/python -m venv "$project_home/project1-py39-cu118"
+    python3 -c 'import sys; assert (3, 9) <= sys.version_info[:2] < (3, 13), "Use Python 3.9-3.12"'
+    python3 -m venv .venv
 fi
-if ! "$python_executable" -c 'import torch, torchvision; assert torch.__version__ == "2.6.0+cu118" and torchvision.__version__ == "0.21.0+cu118"'; then
-    "$python_executable" -m pip install --upgrade pip --index-url https://pypi.org/simple
-    "$python_executable" -m pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu118
-fi
+"$python_executable" -m pip install --timeout 60 --retries 2 \
+    torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu118
+"$python_executable" -m pip install --timeout 60 --retries 2 \
+    matplotlib==3.9.4 --index-url https://pypi.org/simple
 
-"$python_executable" -c "import matplotlib" 2>/dev/null || "$python_executable" -m pip install matplotlib==3.9.4 --index-url https://pypi.org/simple
-
-"$python_executable" -c 'import math, sys; assert all(math.isfinite(float(x)) and float(x) > 0 for x in sys.argv[1:])' "$PEAK_GFLOPS" "$BANDWIDTH_GBS"
-
-# check the imports and actual image loading before requesting a GPU
-"$python_executable" - <<'PY'
-from pathlib import Path
-import torch
-import torchvision
-from main import load_batches
-assert torch.version.cuda == "11.8", "A CUDA-enabled PyTorch build is required"
-batches, images = load_batches(Path('../data/imagenet128'))
-assert len(images) == 128 and len(batches) == 4
-assert all(tuple(x.shape) == (32, 3, 224, 224) for x, y in batches)
-print('Preflight passed:', torch.__version__, torchvision.__version__, len(images), 'images')
-PY
-bash -n run.slurm
-job_id=$(sbatch --parsable --job-name="$job_name" --account=csci_ga_3033_085-2026fa --partition="${PARTITION:-g2-standard-12}" run.slurm "$python_executable" "$project_folder/data/imagenet128")
-printf '%s\n' "$job_id" > "$job_record"
-echo "Submitted GPU batch job $job_id"
-echo "Job record: $job_record"
-echo "Logs: $project_folder/code/slurm-${job_id%%;*}.out and .err"
+# Limit the experiment process. This does NOT stop VM billing: configure GCP's
+# maximum VM run time with termination action STOP before launching the VM.
+# Persistent disks can still incur charges after a VM stops.
+timeout --kill-after=30s "${MAX_RUN_TIME:-3h}" \
+    bash run.sh "$python_executable" "$data_folder" "$output_folder"

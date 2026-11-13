@@ -1,0 +1,578 @@
+{
+  "model": "resnet152",
+  "gpu": "NVIDIA A100-SXM4-40GB",
+  "gpu_memory_gib": 39.51629638671875,
+  "torch": "2.6.0+cu118",
+  "torchvision": "0.21.0+cu118",
+  "cuda": "11.8",
+  "cudnn": 90100,
+  "python": "3.9.18",
+  "command": [
+    "main.py",
+    "--data",
+    "../data/imagenet128",
+    "--model",
+    "resnet152",
+    "--output",
+    "results/a100-nyu-30293"
+  ],
+  "precision": "FP32 (TF32 disabled)",
+  "batch_size": 32,
+  "subset_size": 128,
+  "seed": 0,
+  "warmup_steps": 10,
+  "timed_steps": 50,
+  "optimizer": "SGD, lr=0.01, momentum=0.9, foreach=False",
+  "mode": "timing",
+  "images": [
+    {
+      "image": "n03000684/n03000684_7699.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03425413/n03425413_9208.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03888257/n03888257_45616.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n02102040/n02102040_1094.JPEG",
+      "label": 1
+    },
+    {
+      "image": "n03000684/ILSVRC2012_val_00006669.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03888257/n03888257_10136.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03417042/n03417042_1718.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03425413/n03425413_12098.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03445777/n03445777_4883.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n02102040/n02102040_1419.JPEG",
+      "label": 1
+    },
+    {
+      "image": "n02102040/n02102040_2478.JPEG",
+      "label": 1
+    },
+    {
+      "image": "n02979186/n02979186_14536.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03028079/n03028079_14773.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n01440764/n01440764_6163.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n02979186/n02979186_9746.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03417042/n03417042_5335.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03445777/n03445777_4679.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03445777/n03445777_5707.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03417042/n03417042_22918.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03888257/n03888257_69239.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03888257/n03888257_23297.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n01440764/n01440764_9966.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03028079/n03028079_3587.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03394916/n03394916_41165.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n02979186/n02979186_10598.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03445777/n03445777_5934.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03000684/n03000684_13559.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03888257/n03888257_6417.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n01440764/n01440764_5696.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03000684/n03000684_28418.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03445777/n03445777_3633.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03000684/ILSVRC2012_val_00029918.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03445777/n03445777_8954.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03888257/n03888257_5565.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03000684/n03000684_16918.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03394916/n03394916_57515.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n03417042/n03417042_29408.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n02979186/n02979186_19188.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03000684/n03000684_28288.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03417042/n03417042_1496.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03445777/n03445777_844.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03425413/n03425413_30164.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03000684/n03000684_34715.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03028079/n03028079_14439.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03445777/n03445777_20319.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03000684/n03000684_3003.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n02979186/n02979186_198.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n01440764/ILSVRC2012_val_00017699.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03445777/n03445777_6.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03888257/n03888257_42133.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03394916/n03394916_40776.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n03000684/n03000684_293.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03394916/n03394916_36515.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n03028079/n03028079_2836.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n02979186/n02979186_14793.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03000684/n03000684_8408.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03417042/n03417042_816.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03445777/n03445777_17564.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03000684/n03000684_16976.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n01440764/n01440764_11679.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03394916/n03394916_30808.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n01440764/n01440764_5163.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03028079/n03028079_3389.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03888257/n03888257_9874.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03888257/n03888257_38516.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03028079/n03028079_5983.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03028079/n03028079_7077.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03028079/ILSVRC2012_val_00044414.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03417042/n03417042_3796.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n02102040/n02102040_934.JPEG",
+      "label": 1
+    },
+    {
+      "image": "n03445777/n03445777_12303.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n01440764/n01440764_10373.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n01440764/n01440764_30045.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03028079/n03028079_36686.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n02979186/n02979186_1299.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03425413/n03425413_145.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03445777/n03445777_7146.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03417042/n03417042_27015.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n02979186/n02979186_3306.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03445777/n03445777_7808.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03445777/n03445777_5373.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03028079/n03028079_52923.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03425413/ILSVRC2012_val_00017469.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n02979186/n02979186_10744.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03417042/n03417042_15903.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03445777/n03445777_4539.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03417042/n03417042_29478.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03394916/n03394916_14234.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n01440764/n01440764_13009.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n02979186/n02979186_10755.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n02979186/n02979186_22659.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03445777/n03445777_59.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03445777/n03445777_3915.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03445777/n03445777_1036.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03445777/ILSVRC2012_val_00002314.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03417042/n03417042_5886.JPEG",
+      "label": 6
+    },
+    {
+      "image": "n03028079/n03028079_9744.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03394916/n03394916_21075.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n01440764/n01440764_25064.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03394916/n03394916_3249.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n03888257/n03888257_21243.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03445777/n03445777_8224.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n03425413/n03425413_1115.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03425413/n03425413_15667.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03888257/n03888257_6159.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n03425413/n03425413_1825.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03028079/n03028079_1784.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03394916/n03394916_21327.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n03028079/n03028079_236.JPEG",
+      "label": 4
+    },
+    {
+      "image": "n03000684/n03000684_4545.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03425413/n03425413_13619.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n02979186/n02979186_14999.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n01440764/n01440764_2866.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03425413/n03425413_8596.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03425413/n03425413_15647.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03445777/n03445777_3544.JPEG",
+      "label": 8
+    },
+    {
+      "image": "n02979186/n02979186_23309.JPEG",
+      "label": 2
+    },
+    {
+      "image": "n03425413/ILSVRC2012_val_00002049.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03425413/n03425413_17973.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03425413/n03425413_13203.JPEG",
+      "label": 7
+    },
+    {
+      "image": "n03394916/n03394916_15175.JPEG",
+      "label": 5
+    },
+    {
+      "image": "n03000684/n03000684_6266.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n03000684/n03000684_16816.JPEG",
+      "label": 3
+    },
+    {
+      "image": "n01440764/n01440764_529.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n03888257/n03888257_4929.JPEG",
+      "label": 9
+    },
+    {
+      "image": "n01440764/n01440764_30897.JPEG",
+      "label": 0
+    },
+    {
+      "image": "n02102040/n02102040_5099.JPEG",
+      "label": 1
+    },
+    {
+      "image": "n03425413/n03425413_11177.JPEG",
+      "label": 7
+    }
+  ],
+  "measurements": [
+    {
+      "repeat": 1,
+      "step_ms": 165.7583203125,
+      "images_per_second": 193.0521492958616,
+      "peak_allocated_mib": 6021.046875
+    },
+    {
+      "repeat": 2,
+      "step_ms": 165.72158203125,
+      "images_per_second": 193.09494640212753,
+      "peak_allocated_mib": 6024.921875
+    },
+    {
+      "repeat": 3,
+      "step_ms": 165.71712890625,
+      "images_per_second": 193.10013521959542,
+      "peak_allocated_mib": 6024.921875
+    }
+  ],
+  "summary": {
+    "step_ms": {
+      "median": 165.72158203125,
+      "min": 165.71712890625,
+      "max": 165.7583203125
+    },
+    "images_per_second": {
+      "median": 193.09494640212753,
+      "min": 193.0521492958616,
+      "max": 193.10013521959542
+    },
+    "peak_allocated_mib": {
+      "median": 6024.921875,
+      "min": 6021.046875,
+      "max": 6024.921875
+    }
+  }
+}
