@@ -70,6 +70,7 @@ def main():
     parser.add_argument("folder", type=Path, help="GPU folder containing ResNet-50, ResNet-101, and ResNet-152 subfolders")
     parser.add_argument("--peak-gflops", type=float, required=True, help="This GPU's FP32 peak, GFLOP/s")
     parser.add_argument("--bandwidth-gbs", type=float, required=True, help="This GPU's DRAM bandwidth, GB/s")
+    parser.add_argument("--title", help="Figure title, such as 'NVIDIA L4' (default: the folder name)")
     args = parser.parse_args()
     if any(not math.isfinite(limit) or limit <= 0 for limit in [args.peak_gflops, args.bandwidth_gbs]):
         parser.error("Peak compute and memory bandwidth must be positive finite numbers.")
@@ -113,33 +114,56 @@ def main():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
 
-    intensities = [point["flops_per_byte"] for point in plotted_points]
+    # Use the same axes for every GPU so the figures can be compared side by side.
     ridge_intensity = args.peak_gflops / args.bandwidth_gbs
-    min_exponent = math.floor(math.log10(min(*intensities, ridge_intensity))) - 1
-    max_exponent = math.ceil(math.log10(max(*intensities, ridge_intensity))) + 1
-    intensity_values = [10 ** (min_exponent + (max_exponent - min_exponent) * i / 200)
-                        for i in range(201)]
+    intensities = [point["flops_per_byte"] for point in plotted_points] + [ridge_intensity]
+    rates = [point["gflops_per_second"] for point in plotted_points] + [args.peak_gflops]
+    x_limits = (min(1.0, min(intensities) / 2), max(1000.0, max(intensities) * 2))
+    y_limits = (min(200.0, min(rates) / 2), max(50000.0, max(rates) * 1.5))
+    steps = 400
+    intensity_values = [x_limits[0] * (x_limits[1] / x_limits[0]) ** (i / steps) for i in range(steps + 1)]
     # The roof is the lower of the compute limit and the memory-bandwidth limit.
     performance_bound = [min(args.peak_gflops, args.bandwidth_gbs * intensity)
                          for intensity in intensity_values]
-    figure, panels = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True, sharey=True)
+    model_styles = {"resnet50": ("#0072B2", "o", "ResNet-50"),
+                    "resnet101": ("#D55E00", "s", "ResNet-101"),
+                    "resnet152": ("#009E73", "^", "ResNet-152")}
+    number_format = FuncFormatter(lambda value, _: f"{value:,.0f}")
+
+    figure, panels = plt.subplots(1, 2, figsize=(10.8, 4.2), sharex=True, sharey=True)
     for panel, phase in zip(panels, PHASES):
-        panel.loglog(intensity_values, performance_bound, color="black", label="FP32 / DRAM roof")
-        for model, color in zip(MODELS, ["tab:blue", "tab:orange", "tab:green"]):
+        panel.plot(intensity_values, performance_bound, color="#333333", lw=2, zorder=2)
+        panel.axvline(ridge_intensity, color="#777777", ls=":", lw=1, zorder=1)
+        for model in MODELS:
+            color, marker, label = model_styles[model]
             model_points = [point for point in plotted_points
                             if point["model"] == model and point["phase"] == phase]
             panel.scatter([point["flops_per_byte"] for point in model_points],
                           [point["gflops_per_second"] for point in model_points],
-                          s=65, color=color, label=model)
-        panel.set_title(phase.capitalize())
-        panel.set_xlabel("Arithmetic intensity (FLOP/byte)")
-        panel.grid(True, which="both", alpha=0.2)
-    panels[0].set_ylabel("Aggregate profiled kernel performance (GFLOP/s)")
-    panels[1].legend(fontsize=8)
-    figure.suptitle(f"{args.folder.name}: one point per model in each phase")
-    figure.tight_layout()
-    figure.savefig(args.folder / "roofline.png", dpi=200)
+                          s=90, marker=marker, color=color, edgecolors="white", linewidths=0.8,
+                          label=label, zorder=3)
+        panel.set_xscale("log")
+        panel.set_yscale("log")
+        panel.set_xlim(*x_limits)
+        panel.set_ylim(*y_limits)
+        panel.set_yticks([tick for tick in (200, 1000, 10000, 50000) if y_limits[0] <= tick <= y_limits[1]])
+        panel.xaxis.set_major_formatter(number_format)
+        panel.yaxis.set_major_formatter(number_format)
+        panel.set_title(phase.capitalize(), fontsize=13)
+        panel.set_xlabel("Arithmetic intensity (FLOP/byte)", fontsize=12)
+        panel.tick_params(labelsize=11)
+        panel.grid(True, which="major", color="#e6e6e6", lw=0.8)
+        panel.set_axisbelow(True)
+        panel.spines[["top", "right"]].set_visible(False)
+    panels[0].set_ylabel("Aggregate kernel rate (GFLOP/s)", fontsize=12)
+    handles, labels = panels[0].get_legend_handles_labels()
+    figure.legend(handles, labels, loc="lower center", ncol=3, frameon=False, fontsize=12,
+                  bbox_to_anchor=(0.5, 0.0))
+    figure.suptitle(args.title or args.folder.name, fontsize=15, fontweight="bold")
+    figure.tight_layout(rect=(0, 0.08, 1, 1))
+    figure.savefig(args.folder / "roofline.png", dpi=200, facecolor="white")
     plt.close(figure)
     # Keep kernel details with each model and the comparison summary at GPU level.
     csv_outputs = [(args.folder / "roofline-summary.csv", model_summaries)]
