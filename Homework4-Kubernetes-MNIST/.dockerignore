@@ -1,0 +1,8 @@
+*
+!src/
+!src/**
+!requirements.txt
+!Dockerfile.train
+!Dockerfile.inference
+**/__pycache__/
+**/*.pyc

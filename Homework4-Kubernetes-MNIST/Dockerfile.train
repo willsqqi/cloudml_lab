@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    DATA_DIR=/app/data \
+    MODEL_PATH=/model/mnist_cnn.pt \
+    OMP_NUM_THREADS=2
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --index-url https://download.pytorch.org/whl/cpu
+COPY src/model.py src/train.py src/download_data.py ./
+RUN python download_data.py --data-dir /app/data
+
+CMD ["python", "train.py"]

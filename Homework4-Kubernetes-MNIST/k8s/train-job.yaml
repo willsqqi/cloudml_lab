@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mnist-training
+  namespace: homework4
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 3600
+  template:
+    metadata:
+      labels:
+        app: mnist-training
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: training
+          image: us-central1-docker.pkg.dev/PROJECT_ID/homework4/train:v2
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 2Gi
+          volumeMounts:
+            - name: model
+              mountPath: /model
+      volumes:
+        - name: model
+          persistentVolumeClaim:
+            claimName: mnist-model
