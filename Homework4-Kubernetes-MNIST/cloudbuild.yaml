@@ -1,0 +1,15 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: [build, --platform=linux/amd64, -f, Dockerfile.train, -t, '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/train:${_TAG}', .]
+  - name: gcr.io/cloud-builders/docker
+    args: [build, --platform=linux/amd64, -f, Dockerfile.inference, -t, '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/inference:${_TAG}', .]
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/train:${_TAG}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/inference:${_TAG}'
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: homework4
+  _TAG: v2
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s

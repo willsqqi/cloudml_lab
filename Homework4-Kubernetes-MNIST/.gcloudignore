@@ -1,0 +1,10 @@
+*
+!src/
+!src/**
+!requirements.txt
+!Dockerfile.train
+!Dockerfile.inference
+!cloudbuild.yaml
+!.dockerignore
+**/__pycache__/
+**/*.pyc
