@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mnist-inference
+  namespace: homework4
+spec:
+  type: LoadBalancer
+  selector:
+    app: mnist-inference
+  ports:
+    - port: 80
+      targetPort: http
