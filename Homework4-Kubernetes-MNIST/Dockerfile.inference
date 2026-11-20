@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    DATA_DIR=/app/data \
+    MODEL_PATH=/model/mnist_cnn.pt \
+    OMP_NUM_THREADS=1
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir Flask==3.1.2 gunicorn==23.0.0
+COPY src/model.py src/inference.py src/download_data.py ./
+COPY src/templates ./templates
+RUN python download_data.py --data-dir /app/data --test-only
+
+EXPOSE 8080
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--worker-class", "gthread", "--threads", "4", "--access-logfile", "-", "inference:create_app()"]

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MNIST digit prediction</title>
+  <style>
+    body { max-width: 560px; margin: 48px auto; padding: 0 20px; font-family: sans-serif; }
+    input, button { padding: 8px; font-size: 1rem; }
+    img { width: 224px; height: 224px; image-rendering: pixelated; }
+    .error { color: #a01818; }
+  </style>
+</head>
+<body>
+  <h1>MNIST digit prediction</h1>
+  <form method="post" action="/predict">
+    <label for="image_id">Test image ID (0–{{ last_id }})</label>
+    <p>
+      <input id="image_id" name="image_id" type="number" min="0" max="{{ last_id }}"
+             step="1" value="{{ image_id }}" required>
+      <button type="submit">Predict</button>
+    </p>
+  </form>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if digit is defined %}
+    <img src="data:image/png;base64,{{ image_base64 }}" alt="MNIST test image {{ image_id }}">
+    <p>Predicted digit: <strong>{{ digit }}</strong></p>
+  {% endif %}
+</body>
+</html>
