@@ -1,12 +1,14 @@
 # Homework 4 Kubernetes MNIST
 
+[Report](report/Homework4-Report-withlink.pdf)
+
 ## Files
 
 - `src/`: model, training, inference and web page.
 - `Dockerfile.train`, `Dockerfile.inference`: container definitions.
 - `k8s/`: storage, training Job, inference Deployment and Service.
 - `cloudbuild.yaml`: build and push both images.
-- `screenshots/`: screenshots from each run.
+- `screenshots/ui/`: application UI tests.
 - `scripts/cleanup.sh`: remove cloud resources after saving results.
 
 ## Workflow
